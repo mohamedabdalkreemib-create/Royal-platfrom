@@ -4,53 +4,27 @@ import sqlite3
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-# أتمتة مسار النظام البرمجي لضمان قراءة الملفات في خوادم Render المرنة
-sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+# 🚀 أداة الأتمتة الجذريّة: إجبار محرك بايثون على قراءة المجلد الرئيسي للمشروع أولاً
+# هذا السطر البرمجي يحل مشكلة تعارض مجلد البيئة المحلية .venv في السيرفر السحابي
+CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
+if CURRENT_DIR not in sys.path:
+    sys.path.insert(0, CURRENT_DIR)
 
-# 🔄 الاستيراد الذكي والمطابق لحالة الأحرف (Case-Insensitive Imports)
-try:
-    import route_auth as auth_module
-    auth_router = auth_module.router
-except ModuleNotFoundError:
-    import Route_auth as auth_module
-    auth_router = auth_module.router
-
-try:
-    import route_users as users_module
-    users_router = users_module.router
-except ModuleNotFoundError:
-    import Route_users as users_module
-    users_router = users_module.router
-
-try:
-    import route_companies as companies_module
-    companies_router = companies_module.router
-except ModuleNotFoundError:
-    import Route_companies as companies_module
-    companies_router = companies_module.router
-
-try:
-    import route_admin as admin_module
-    admin_router = admin_module.router
-except ModuleNotFoundError:
-    import Route_admin as admin_module
-    admin_router = admin_module.router
-
-try:
-    import route_health as health_module
-    health_router = health_module.router
-except ModuleNotFoundError:
-    import Route_health as health_module
-    health_router = health_module.router
-
+# استيراد الموجهات بالأسماء الحرفية الموثقة بداخل مستودع GitHub الخاص بك
+import route_auth
+import route_users
+import route_companies
+import route_admin
+import route_health
 
 def init_database_securely():
-    db_path = "database.db"
+    db_path = os.path.join(CURRENT_DIR, "database.db")
     conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
     try:
-        if os.path.exists("schema.sql"):
-            with open("schema.sql", "r", encoding="utf-8") as f:
+        schema_path = os.path.join(CURRENT_DIR, "schema.sql")
+        if os.path.exists(schema_path):
+            with open(schema_path, "r", encoding="utf-8") as f:
                 cursor.executescript(f.read())
         
         admin_username = os.getenv("ADMIN_USERNAME", "super_admin")
@@ -75,8 +49,8 @@ init_database_securely()
 
 app = FastAPI(
     title="منصتي الملكية - الـ API المستقر",
-    description="المحرك الخلفي الشامل والمصحح للموقع الإلكتروني والتشغيل المجاني",
-    version="1.1.0",
+    description="المحرك الخلفي الموثق والآمن للموقع الإلكتروني والتشغيل المجاني",
+    version="1.3.0",
     docs_url="/api/v1/docs", 
     redoc_url="/api/v1/redoc"
 )
@@ -84,18 +58,18 @@ app = FastAPI(
 # 🌐 إعدادات CORS المفتوحة والمجانية لمنع حظر المتصفحات للموقع الإلكتروني
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"], # يسمح للموقع بالاتصال بالبيانات من أي مكان حركي
+    allow_origins=["*"], 
     allow_credentials=False,
     allow_methods=["*"], 
     allow_headers=["*"], 
 )
 
-# 🛠️ تضمين الموجهات البرمجية التي تم التحقق من سلامتها
-app.include_router(auth_router, prefix="/api/v1/auth", tags=["الأمان والتوثيق"])
-app.include_router(users_router, prefix="/api/v1/users", tags=["إدارة المستخدمين"])
-app.include_router(companies_router, prefix="/api/v1/companies", tags=["سجل الشركات"])
-app.include_router(admin_router, prefix="/api/v1/admin", tags=["الإدارة العليا"])
-app.include_router(health_router, prefix="/api/v1/health", tags=["الحالة الفنية"])
+# 🛠️ ربط الموجهات بالمسارات الدقيقة الفردية المعتمدة بملفات النظام
+app.include_router(route_auth.router, prefix="/api/v1/auth", tags=["الأمان والتوثيق"])
+app.include_router(route_users.router, prefix="/api/v1/users", tags=["إدارة المستخدمين"])
+app.include_router(route_companies.router, prefix="/api/v1/companies", tags=["سجل الشركات"])
+app.include_router(route_admin.router, prefix="/api/v1/admin", tags=["الإدارة العليا"])
+app.include_router(route_health.router, prefix="/api/v1/health", tags=["الحالة الفنية"])
 
 @app.get("/", tags=["الرئيسية"])
 def root():
