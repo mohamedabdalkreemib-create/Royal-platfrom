@@ -1,5 +1,5 @@
 fastapi
 uvicorn
-pydantic
-pydantic-settings
-axios
+python-multipart
+passlib[bcrypt]
+python-jose[cryptography]
